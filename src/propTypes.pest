@@ -21,3 +21,5 @@ compositeDeclaration = { structDeclaration }
 
 /* The complete file */
 file = { SOI ~ compositeDeclaration* ~ EOI }
+
+WHITESPACE = _{ " " | NEWLINE }
