@@ -1,5 +1,5 @@
 /* A basic type that complex types can be derived from */
-primitive = { "string" | "u8" | "i8" | "u16" | "i16" | "u32" | "i32" | "u64" | "i64" }
+primitive = { "string" | "u8" | "i8" | "u16" | "i16" | "u32" | "i32" | "u64" | "i64" | "char" }
 
 /* The name of a composite type. Must begin with an uppercase letter */
 compositeTypeName = { ASCII_ALPHA_UPPER ~ ASCII_ALPHA* }
@@ -16,8 +16,11 @@ structField = { structFieldName ~ ":" ~ typeName ~ "," }
 /* A struct- a product type combining multiple types as fields into one larger type */
 structDeclaration = { "struct" ~ compositeTypeName ~ "{" ~ structField* ~ "}" }
 
+/* An alternative name for an existing type */
+aliasDeclaration = { "alias" ~ compositeTypeName ~ "=" ~ typeName }
+
 /* A declaration for a composite type */
-compositeDeclaration = { structDeclaration }
+compositeDeclaration = { structDeclaration | aliasDeclaration }
 
 /* The complete file */
 file = { SOI ~ compositeDeclaration* ~ EOI }
