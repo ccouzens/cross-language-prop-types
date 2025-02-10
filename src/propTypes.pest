@@ -1,0 +1,23 @@
+/* A basic type that complex types can be derived from */
+primitive = { "string" | "u8" | "i8" | "u16" | "i16" | "u32" | "i32" | "u64" | "i64" }
+
+/* The name of a composite type. Must begin with an uppercase letter */
+compositeTypeName = { ASCII_ALPHA_UPPER ~ ASCII_ALPHA* }
+
+/* A reference to a type, primitive or composite */
+typeName = { primitive | compositeTypeName }
+
+/* The name of a field within a struct. Must begin with a lower case letter */
+structFieldName = { ASCII_ALPHA_LOWER ~ ASCII_ALPHA* }
+
+/* A field within a struct. The name of a field combined with the type */
+structField = { structFieldName ~ ":" ~ typeName ~ "," }
+
+/* A struct- a product type combining multiple types as fields into one larger type */
+structDeclaration = { "struct" ~ compositeTypeName ~ "{" ~ structField* ~ "}" }
+
+/* A declaration for a composite type */
+compositeDeclaration = { structDeclaration }
+
+/* The complete file */
+file = { SOI ~ compositeDeclaration* ~ EOI }
