@@ -5,7 +5,7 @@ primitive = { "string" | "u8" | "i8" | "u16" | "i16" | "u32" | "i32" | "u64" | "
 compositeTypeName = { ASCII_ALPHA_UPPER ~ ASCII_ALPHA* }
 
 /* A reference to a type, primitive or composite */
-typeName = { primitive | compositeTypeName }
+typeName = _{ primitive | compositeTypeName }
 
 /* The name of a field within a struct. Must begin with a lower case letter */
 structFieldName = { ASCII_ALPHA_LOWER ~ ASCII_ALPHA* }
@@ -20,9 +20,9 @@ structDeclaration = { "struct" ~ compositeTypeName ~ "{" ~ structField* ~ "}" }
 aliasDeclaration = { "alias" ~ compositeTypeName ~ "=" ~ typeName }
 
 /* A declaration for a composite type */
-compositeDeclaration = { structDeclaration | aliasDeclaration }
+compositeDeclaration = _{ structDeclaration | aliasDeclaration }
 
 /* The complete file */
-file = { SOI ~ compositeDeclaration* ~ EOI }
+file = _{ SOI ~ compositeDeclaration* ~ EOI }
 
 WHITESPACE = _{ " " | NEWLINE }
