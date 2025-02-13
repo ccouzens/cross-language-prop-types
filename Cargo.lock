@@ -33,6 +33,7 @@ dependencies = [
  "indexmap",
  "pest",
  "pest_derive",
+ "thiserror",
 ]
 
 [[package]]
