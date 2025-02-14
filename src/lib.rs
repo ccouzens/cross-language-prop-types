@@ -27,6 +27,8 @@ enum CrossCompilerParseError {
         field_name: String,
         struct_name: String,
     },
+    #[error("type name {type_name:?} is duplicated")]
+    NonUniqueCompositeTypeName { type_name: String },
 }
 
 impl<'a> CrossCompiler<'a> {
@@ -43,7 +45,6 @@ impl<'a> CrossCompiler<'a> {
                 | Rule::typeName
                 | Rule::structFieldName
                 | Rule::structField
-                | Rule::aliasDeclaration
                 | Rule::compositeDeclaration
                 | Rule::file
                 | Rule::WHITESPACE => unreachable!(),
@@ -77,7 +78,24 @@ impl<'a> CrossCompiler<'a> {
                         )
                         .is_some()
                     {
-                        panic!("expected type name to be unique");
+                        return Err(CrossCompilerParseError::NonUniqueCompositeTypeName {
+                            type_name: composite_type_name.to_string(),
+                        });
+                    };
+                }
+                Rule::aliasDeclaration => {
+                    let mut tokens = pest_composite_declaration.into_inner();
+                    let composite_type_name = tokens.next().unwrap().as_str();
+                    let references = tokens.next().unwrap().as_str();
+
+                    if output
+                        .composite_types
+                        .insert(composite_type_name, CompositeType::Alias { references })
+                        .is_some()
+                    {
+                        return Err(CrossCompilerParseError::NonUniqueCompositeTypeName {
+                            type_name: composite_type_name.to_string(),
+                        });
                     };
                 }
             }
@@ -106,6 +124,18 @@ mod tests {
             Some(CrossCompilerParseError::NonUniqueStructField {
                 field_name: "birthYear".to_string(),
                 struct_name: "Person".to_string()
+            })
+        );
+    }
+
+    #[test]
+    fn it_errors_with_duplicated_composite_type_name() {
+        let input = "struct Person { birthYear: u32, } alias Person = u32";
+        let c = CrossCompiler::parse(input);
+        assert_eq!(
+            c.err(),
+            Some(CrossCompilerParseError::NonUniqueCompositeTypeName {
+                type_name: "Person".to_string()
             })
         );
     }
