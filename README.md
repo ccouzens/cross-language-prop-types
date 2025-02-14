@@ -6,10 +6,10 @@ different programming languages.
 Given the input:
 
 ```
-struct Person {
+type Person = struct {
   birthYear: u32,
   name: string,
-}
+};
 ```
 
 It will generate the typescript:

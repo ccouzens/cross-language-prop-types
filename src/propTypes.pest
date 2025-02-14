@@ -14,15 +14,15 @@ structFieldName = { ASCII_ALPHA_LOWER ~ ASCII_ALPHA* }
 structField = { structFieldName ~ ":" ~ typeName ~ "," }
 
 /* A struct- a product type combining multiple types as fields into one larger type */
-structDeclaration = { "struct" ~ compositeTypeName ~ "{" ~ structField* ~ "}" }
+structDeclaration = { "struct" ~ "{" ~ structField* ~ "}" }
 
 /* An alternative name for an existing type */
-aliasDeclaration = { "alias" ~ compositeTypeName ~ "=" ~ typeName }
+aliasDeclaration = { "alias" ~ typeName }
 
 /* A declaration for a composite type */
 compositeDeclaration = _{ structDeclaration | aliasDeclaration }
 
 /* The complete file */
-file = _{ SOI ~ compositeDeclaration* ~ EOI }
+file = _{ SOI ~ ("type" ~ compositeTypeName ~ "=" ~ compositeDeclaration* ~ ";")* ~ EOI }
 
 WHITESPACE = _{ " " | NEWLINE }
