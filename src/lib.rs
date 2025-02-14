@@ -7,13 +7,13 @@ use thiserror::Error;
 #[grammar = "propTypes.pest"]
 pub struct PestParser;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 enum CompositeType<'a> {
     Alias { references: &'a str },
     Struct { fields: IndexMap<&'a str, &'a str> },
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 struct CrossCompiler<'a> {
     composite_types: IndexMap<&'a str, CompositeType<'a>>,
 }
@@ -141,9 +141,26 @@ mod tests {
     }
 
     #[test]
-    fn it_works() {
-        let input = " struct Person { birthYear: u32, name: string, }";
+    fn it_parses_structs_and_aliases() {
+        let input = " alias Year = u32\n struct Person { birthYear: Year, name: string, }";
         let c = CrossCompiler::parse(input);
-        dbg!(c);
+        assert_eq!(
+            c,
+            Ok(CrossCompiler {
+                composite_types: [
+                    ("Year", CompositeType::Alias { references: "u32" }),
+                    (
+                        "Person",
+                        CompositeType::Struct {
+                            fields: [("birthYear", "Year"), ("name", "string")]
+                                .into_iter()
+                                .collect()
+                        }
+                    )
+                ]
+                .into_iter()
+                .collect()
+            })
+        )
     }
 }
