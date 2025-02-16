@@ -13,6 +13,13 @@ enum CompositeType<'a> {
     Struct { fields: IndexMap<&'a str, &'a str> },
 }
 
+fn type_name_is_primitive(name: &str) -> bool {
+    name.chars()
+        .next()
+        .map(|c| c.is_lowercase())
+        .unwrap_or(false)
+}
+
 impl<'a> CompositeType<'a> {
     fn direct_references(&self) -> Vec<&'a str> {
         match self {
@@ -144,7 +151,7 @@ impl<'a> CrossCompiler<'a> {
     fn validate_references(&self) -> Result<(), CrossCompilerParseError> {
         for (&name, composite_type) in &self.composite_types {
             for reference in composite_type.direct_references() {
-                if reference.chars().next().unwrap().is_uppercase()
+                if !type_name_is_primitive(reference)
                     && !self.composite_types.contains_key(reference)
                 {
                     return Err(CrossCompilerParseError::ReferenceNotDefined {
