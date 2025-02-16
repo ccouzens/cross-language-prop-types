@@ -78,7 +78,7 @@ impl<'a> CompositeType<'a> {
 }
 
 #[derive(Error, Debug, PartialEq, Eq)]
-enum CrossCompilerParseError {
+pub enum CrossCompilerParseError {
     #[error("input invalid to Pest")]
     PestParse(#[from] Box<pest::error::Error<Rule>>),
     #[error("field {field_name:?} name is duplicated in struct {struct_name:?}")]
@@ -100,7 +100,7 @@ enum CrossCompilerParseError {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-struct CrossCompiler<'a> {
+pub struct CrossCompiler<'a> {
     composite_types: IndexMap<&'a str, CompositeType<'a>>,
 }
 
@@ -195,7 +195,7 @@ impl<'a> CrossCompiler<'a> {
         Ok(())
     }
 
-    fn parse_and_validate(input: &'a str) -> Result<Self, CrossCompilerParseError> {
+    pub fn parse_and_validate(input: &'a str) -> Result<Self, CrossCompilerParseError> {
         let parsed = Self::parse(input)?;
         parsed.validate_references()?;
         Ok(parsed)
