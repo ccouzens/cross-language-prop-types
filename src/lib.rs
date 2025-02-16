@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use indexmap::IndexMap;
 use pest::{iterators::Pair, Parser};
 use pest_derive::Parser;
@@ -93,8 +95,8 @@ enum CrossCompilerParseError {
         composite_type_name: String,
         reference_name: String,
     },
-    #[error("type name {type_name:?} does not include any base primitives")]
-    TypeHasNoBase { type_name: String },
+    #[error("type name {type_names:?} does not include any base primitives")]
+    TypesHaveNoBase { type_names: Vec<String> },
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -148,7 +150,7 @@ impl<'a> CrossCompiler<'a> {
     Recursive types are allowed but there must be branches that resolve to
     primitive types (the recursive base case).
     */
-    fn validate_references(&self) -> Result<(), CrossCompilerParseError> {
+    fn validate_references(&'a self) -> Result<(), CrossCompilerParseError> {
         for (&name, composite_type) in &self.composite_types {
             for reference in composite_type.direct_references() {
                 if !type_name_is_primitive(reference)
@@ -159,6 +161,34 @@ impl<'a> CrossCompiler<'a> {
                         reference_name: reference.to_string(),
                     });
                 }
+            }
+        }
+
+        let mut references_primitive: HashSet<&'a str> = HashSet::new();
+        while references_primitive.len() < self.composite_types.len() {
+            let mut changed = false;
+            for (&name, composite_type) in &self.composite_types {
+                if references_primitive.contains(name) {
+                    continue;
+                }
+                for reference in composite_type.direct_references() {
+                    if type_name_is_primitive(reference) || references_primitive.contains(reference)
+                    {
+                        references_primitive.insert(name);
+                        changed = true;
+                    }
+                }
+            }
+
+            if !changed {
+                return Err(CrossCompilerParseError::TypesHaveNoBase {
+                    type_names: self
+                        .composite_types
+                        .keys()
+                        .filter(|&&k| !references_primitive.contains(k))
+                        .map(|k| k.to_string())
+                        .collect(),
+                });
             }
         }
 
@@ -217,6 +247,18 @@ mod tests {
             Err(CrossCompilerParseError::ReferenceNotDefined {
                 composite_type_name: "Person".to_string(),
                 reference_name: "Year".to_string()
+            })
+        );
+    }
+
+    #[test]
+    fn it_errors_with_references_with_no_indirect_primitives() {
+        let input = "type Person = struct { birthYear: Year, } ; type Year = alias Year;";
+        let c = CrossCompiler::parse_and_validate(input);
+        assert_eq!(
+            c,
+            Err(CrossCompilerParseError::TypesHaveNoBase {
+                type_names: vec!["Person".to_string(), "Year".to_string()]
             })
         );
     }
