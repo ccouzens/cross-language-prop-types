@@ -14,6 +14,13 @@ enum CompositeType<'a> {
 }
 
 impl<'a> CompositeType<'a> {
+    fn direct_references(&self) -> Vec<&'a str> {
+        match self {
+            CompositeType::Alias { references } => vec![*references],
+            CompositeType::Struct { fields } => fields.values().copied().collect(),
+        }
+    }
+
     fn parse(
         composite_type_name: &'a str,
         pest_composite_declaration: Pair<'a, Rule>,
@@ -72,6 +79,15 @@ enum CrossCompilerParseError {
     },
     #[error("type name {type_name:?} is duplicated")]
     NonUniqueCompositeTypeName { type_name: String },
+    #[error(
+        "on {composite_type_name:?} type name {reference_name:?} is referenced but not defined"
+    )]
+    ReferenceNotDefined {
+        composite_type_name: String,
+        reference_name: String,
+    },
+    #[error("type name {type_name:?} does not include any base primitives")]
+    TypeHasNoBase { type_name: String },
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -118,6 +134,35 @@ impl<'a> CrossCompiler<'a> {
         }
         Ok(output)
     }
+
+    /**
+    Need to make sure that all references resolve to types.
+
+    Recursive types are allowed but there must be branches that resolve to
+    primitive types (the recursive base case).
+    */
+    fn validate_references(&self) -> Result<(), CrossCompilerParseError> {
+        for (&name, composite_type) in &self.composite_types {
+            for reference in composite_type.direct_references() {
+                if reference.chars().next().unwrap().is_uppercase()
+                    && !self.composite_types.contains_key(reference)
+                {
+                    return Err(CrossCompilerParseError::ReferenceNotDefined {
+                        composite_type_name: name.to_string(),
+                        reference_name: reference.to_string(),
+                    });
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    fn parse_and_validate(input: &'a str) -> Result<Self, CrossCompilerParseError> {
+        let parsed = Self::parse(input)?;
+        parsed.validate_references()?;
+        Ok(parsed)
+    }
 }
 
 #[cfg(test)]
@@ -127,17 +172,17 @@ mod tests {
     #[test]
     fn it_errors_with_bad_syntax() {
         let input = "struct Person { birthYear: u32, name: string, };";
-        let c = CrossCompiler::parse(input);
+        let c = CrossCompiler::parse_and_validate(input);
         assert!(matches!(c, Err(CrossCompilerParseError::PestParse(_))));
     }
 
     #[test]
     fn it_errors_with_duplicated_field() {
         let input = "type Person = struct  { birthYear: u32, birthYear: string, };";
-        let c = CrossCompiler::parse(input);
+        let c = CrossCompiler::parse_and_validate(input);
         assert_eq!(
-            c.err(),
-            Some(CrossCompilerParseError::NonUniqueStructField {
+            c,
+            Err(CrossCompilerParseError::NonUniqueStructField {
                 field_name: "birthYear".to_string(),
                 struct_name: "Person".to_string()
             })
@@ -147,11 +192,24 @@ mod tests {
     #[test]
     fn it_errors_with_duplicated_composite_type_name() {
         let input = "type Person = struct { birthYear: u32, } ; type Person =  alias u32;";
-        let c = CrossCompiler::parse(input);
+        let c = CrossCompiler::parse_and_validate(input);
         assert_eq!(
-            c.err(),
-            Some(CrossCompilerParseError::NonUniqueCompositeTypeName {
+            c,
+            Err(CrossCompilerParseError::NonUniqueCompositeTypeName {
                 type_name: "Person".to_string()
+            })
+        );
+    }
+
+    #[test]
+    fn it_errors_with_undefined_reference() {
+        let input = "type Person = struct { birthYear: Year, } ;";
+        let c = CrossCompiler::parse_and_validate(input);
+        assert_eq!(
+            c,
+            Err(CrossCompilerParseError::ReferenceNotDefined {
+                composite_type_name: "Person".to_string(),
+                reference_name: "Year".to_string()
             })
         );
     }
@@ -160,7 +218,7 @@ mod tests {
     fn it_parses_structs_and_aliases() {
         let input =
             "type Year = alias u32; type Person = struct { birthYear: Year, name: string, };";
-        let c = CrossCompiler::parse(input);
+        let c = CrossCompiler::parse_and_validate(input);
         assert_eq!(
             c,
             Ok(CrossCompiler {
