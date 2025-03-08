@@ -1,0 +1,6 @@
+
+type Person = struct {
+  birthYear: u32,
+  name: string,
+};
+
