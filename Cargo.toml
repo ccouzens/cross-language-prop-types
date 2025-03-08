@@ -1,3 +1,3 @@
 [workspace]
 resolver = "2"
-members = ["cross-language-prop-types"]
+members = ["cross-language-prop-types", "website"]
