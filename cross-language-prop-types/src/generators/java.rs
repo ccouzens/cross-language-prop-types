@@ -3,12 +3,12 @@ use crate::CrossCompiler;
 use super::Generator;
 
 struct Java<'a> {
-    cross_compiler: &'a CrossCompiler
-};
+    cross_compiler: &'a CrossCompiler<'a>,
+}
 
 impl<'a> Generator<'a, (), ()> for Java<'a> {
     fn new(cross_compiler: &'a CrossCompiler, _options: ()) -> Self {
-        Self {cross_compiler}
+        Self { cross_compiler }
     }
 
     fn generate_type(&self, _options: (), composite_type_name: &str) -> String {
