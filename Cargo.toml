@@ -1,10 +1,3 @@
-[package]
-name = "cross-language-prop-types"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-indexmap = "2.7.1"
-pest = "2.7.15"
-pest_derive = "2.7.15"
-thiserror = "2.0.11"
+[workspace]
+resolver = "2"
+members = ["cross-language-prop-types"]
