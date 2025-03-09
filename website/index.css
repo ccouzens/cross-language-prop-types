@@ -1,0 +1,9 @@
+textarea {
+  width: 100%;
+  min-height: 10vh;
+  box-sizing: border-box;
+}
+
+pre {
+  text-wrap-mode: wrap;
+}

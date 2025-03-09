@@ -12,6 +12,7 @@ pub fn app() -> impl IntoView {
         textarea()
             .child(input.get_untracked())
             .prop("value", move || input.get())
+            .prop("rows", 4)
             .on_target(ev::input, move |ev| set_input.set(ev.target().value())),
         h2().child("Status"),
         pre().child(parsed),
