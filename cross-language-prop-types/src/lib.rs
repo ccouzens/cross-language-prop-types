@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 mod generators;
 
+use generators::{java::Java, Generator};
 use indexmap::IndexMap;
 use pest::{iterators::Pair, Parser};
 use pest_derive::Parser;
@@ -143,6 +144,13 @@ impl<'a> CrossCompiler<'a> {
             }
         }
         Ok(output)
+    }
+
+    pub fn to_java(&self) -> String {
+        Java {
+            cross_compiler: self,
+        }
+        .generate_types(())
     }
 
     /**

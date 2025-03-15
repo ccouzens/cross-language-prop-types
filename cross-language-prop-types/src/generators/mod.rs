@@ -1,8 +1,8 @@
 use crate::CrossCompiler;
 
-mod java;
+pub(crate) mod java;
 
-trait Generator<'a, InitOptions, GenerateOptions> {
+pub(crate) trait Generator<'a, InitOptions, GenerateOptions> {
     fn new(cross_compiler: &'a CrossCompiler, options: InitOptions) -> Self;
 
     fn generate_type(&self, options: GenerateOptions, composite_type_name: &str) -> String;
