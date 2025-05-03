@@ -9,6 +9,7 @@ jobs:
       contents: "read"
       id-token: "write"
     steps:
+      - uses: cargo-bins/cargo-binstall@main
       - name: Install trunk
         run: cargo binstall trunk
       - uses: actions/checkout@v4
@@ -19,6 +20,5 @@ jobs:
           workload_identity_provider: "projects/153575345186/locations/global/workloadIdentityPools/github/providers/my-repo"
       - name: "Set up Cloud SDK"
         run: 'gcloud info'
-      - uses: cargo-bins/cargo-binstall@main
       - name: Script
         run: ./build_and_release_website.bash
