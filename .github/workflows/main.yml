@@ -9,6 +9,8 @@ jobs:
       contents: "read"
       id-token: "write"
     steps:
+      - name: Install trunk
+        run: cargo binstall trunk
       - uses: actions/checkout@v4
       - uses: "google-github-actions/auth@v2"
         with:
@@ -16,11 +18,7 @@ jobs:
           service_account: "github-workflow@bookish-funicular.iam.gserviceaccount.com"
           workload_identity_provider: "projects/153575345186/locations/global/workloadIdentityPools/github/providers/my-repo"
       - name: "Set up Cloud SDK"
-        uses: "google-github-actions/setup-gcloud@v2"
-      - name: 'Use gcloud CLI'
         run: 'gcloud info'
       - uses: cargo-bins/cargo-binstall@main
-      - name: Install trunk
-        run: cargo binstall trunk
       - name: Script
         run: ./build_and_release_website.bash
