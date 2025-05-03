@@ -17,6 +17,8 @@ jobs:
           workload_identity_provider: "projects/153575345186/locations/global/workloadIdentityPools/github/providers/my-repo"
       - name: "Set up Cloud SDK"
         uses: "google-github-actions/setup-gcloud@v2"
+      - name: 'Use gcloud CLI'
+        run: 'gcloud info'
       - uses: cargo-bins/cargo-binstall@main
       - name: Install trunk
         run: cargo binstall trunk
